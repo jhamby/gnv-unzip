@@ -108,6 +108,8 @@ $ arch_name = f$edit(f$getsyi("arch_name"),"UPCASE")
 $ if arch_name .eqs. "ALPHA" then base = "AXPVMS"
 $ if arch_name .eqs. "IA64" then base = "I64VMS"
 $ if arch_name .eqs. "VAX" then base = "VAXVMS"
+$ bin_dir = arch_name
+$ if arch_name .nes. "VAX" then bin_dir = arch_name + "l"
 $!
 $! Parse the kit name into components.
 $!---------------------------------------
@@ -121,6 +123,7 @@ $ producer = f$element(0, "-", kit_name)
 $ base = f$element(1, "-", kit_name)
 $ product_name = f$element(2, "-", kit_name)
 $ mmversion = f$element(3, "-", kit_name)
+$ mmversion1 = mmversion
 $ majorver = f$extract(0, 3, mmversion)
 $ minorver = f$extract(3, 2, mmversion)
 $ updatepatch = f$element(4, "-", kit_name)
@@ -141,6 +144,13 @@ $ tagver = vms_vernum - "." - "." - "-"
 $ zip_name = producer + "-" + base + "-" + tagver + "-" + product_name
 $ zip_name = zip_name + "-" + mmversion + "-" + updatepatch + "-1"
 $ zip_name = f$edit(zip_name, "lowercase")
+$ unzip_name = product_name + "-" + arch_name + "-" + tagver + "-"
+$ unzip_name = unzip_name + mmversion1
+$ if updatepatch .nes. ""
+$ then
+$   unzip_name = unzip_name + "-" + updatepatch
+$ endif
+$ unzip_name = f$edit(unzip_name, "lowercase")
 $!
 $! Special startup file handling
 $ gnv_startup = "gnv$gnu:[vms_bin]gnv$''product_name'_startup.com"
@@ -203,6 +213,7 @@ $ if f$type(zip) .eqs. "STRING"
 $ then
 $   zip "-9Vj" stage_root:[kit]'zip_name'.zip stage_root:[kit]'kit_name'.pcsi
 $ endif
+$ copy [.'bin_dir']unzip.exe stage_root:[kit]'unzip_name'.exe
 $!
 $!
 $all_exit:
